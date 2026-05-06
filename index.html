@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blood Exchange Network</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+ 
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="drop">&#9679;</span>
+        <span class="brand">BloodBridge</span>
+      </div>
+      <p class="tagline">Hospital Blood Exchange Network</p>
+    </div>
+  </header>
+ 
+  <main>
+    <div class="tabs">
+      <button class="tab-btn {% if active_tab == 'register' or not active_tab %}active{% endif %}"
+              onclick="showTab('register')">Register Hospital</button>
+      <button class="tab-btn {% if active_tab == 'search' %}active{% endif %}"
+              onclick="showTab('search')">Search Blood</button>
+    </div>
+ 
+    <!-- REGISTER TAB -->
+    <div id="tab-register" class="tab-content {% if active_tab == 'search' %}hidden{% endif %}">
+      <div class="form-box">
+        <h2>Register Your Hospital</h2>
+        <p class="sub">List your blood availability or requirement.</p>
+ 
+        {% if reg_success %}
+        <div class="alert success">✓ Hospital registered successfully!</div>
+        {% endif %}
+        {% if reg_error %}
+        <div class="alert error">✗ {{ reg_error }}</div>
+        {% endif %}
+ 
+        <form action="/register" method="POST">
+          <div class="field">
+            <label>Hospital Name</label>
+            <input type="text" name="name" placeholder="e.g. City General Hospital" required />
+          </div>
+          <div class="field">
+            <label>Address</label>
+            <input type="text" name="address" placeholder="Full address" required />
+          </div>
+          <div class="field">
+            <label>City</label>
+            <input type="text" name="city" placeholder="e.g. Pune" required />
+          </div>
+          <div class="field">
+            <label>Blood Group</label>
+            <select name="blood_group" required>
+              <option value="" disabled selected>Select blood group</option>
+              {% for bg in blood_groups %}
+              <option value="{{ bg }}">{{ bg }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="status" value="Have Blood to Donate" required />
+                <span>Have Blood to Donate</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="status" value="Need Blood" required />
+                <span>Need Blood</span>
+              </label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Contact (Phone / Email)</label>
+            <input type="text" name="contact" placeholder="e.g. 020-12345678" required />
+          </div>
+          <button type="submit" class="btn-primary">Register Hospital</button>
+        </form>
+      </div>
+    </div>
+ 
+    <!-- SEARCH TAB -->
+    <div id="tab-search" class="tab-content {% if active_tab != 'search' %}hidden{% endif %}">
+      <div class="form-box">
+        <h2>Find Blood</h2>
+        <p class="sub">Search hospitals by blood group and city.</p>
+        <form action="/search" method="POST">
+          <div class="field-row">
+            <div class="field">
+              <label>Blood Group</label>
+              <select name="blood_group" required>
+                <option value="" disabled {% if not search_bg %}selected{% endif %}>Select</option>
+                {% for bg in blood_groups %}
+                <option value="{{ bg }}" {% if search_bg == bg %}selected{% endif %}>{{ bg }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Your City</label>
+              <input type="text" name="city" placeholder="e.g. Pune"
+                     value="{{ search_city or '' }}" required />
+            </div>
+            <button type="submit" class="btn-primary search-btn">Search</button>
+          </div>
+        </form>
+      </div>
+ 
+      {% if searched %}
+        {% if hospitals %}
+          <div class="results-header">
+            {% if same_city %}
+              <p class="result-note city-match">&#10003; Showing hospitals in <strong>{{ search_city }}</strong> with <strong>{{ search_bg }}</strong></p>
+            {% else %}
+              <p class="result-note fallback">No hospitals found in {{ search_city }} — showing all matches for <strong>{{ search_bg }}</strong></p>
+            {% endif %}
+            <span class="count">{{ hospitals|length }} result(s)</span>
+          </div>
+ 
+          <div class="cards">
+            {% for h in hospitals %}
+            <div class="card">
+              <div class="card-top">
+                <div class="blood-badge {{ 'donate' if h.status == 'Have Blood to Donate' else 'need' }}">
+                  {{ h.blood_group }}
+                </div>
+                <span class="status-tag {{ 'donate' if h.status == 'Have Blood to Donate' else 'need' }}">
+                  {{ h.status }}
+                </span>
+              </div>
+              <h3 class="card-name">{{ h.name }}</h3>
+              <p class="card-address">&#128205; {{ h.address }}</p>
+              <div class="contact-section" id="contact-{{ loop.index }}">
+                <button class="btn-contact" onclick="toggleContact({{ loop.index }})">Contact Hospital</button>
+                <div class="contact-reveal hidden" id="reveal-{{ loop.index }}">
+                  <p class="contact-info">&#128222; {{ h.contact }}</p>
+                  <div class="msg-form">
+                    <textarea placeholder="Write a quick message..." rows="3"></textarea>
+                    <button class="btn-send" onclick="sendMsg(this)">Send Message</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+ 
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">&#128197;</div>
+            <p>No hospitals found with <strong>{{ search_bg }}</strong> blood anywhere.</p>
+            <p class="empty-sub">Try registering your hospital or check a different blood group.</p>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </main>
+ 
+  <footer>
+    <p>BloodBridge &mdash; Connecting Hospitals, Saving Lives</p>
+  </footer>
+ 
+  <script>
+    function showTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      event.currentTarget.classList.add('active');
+    }
+ 
+    function toggleContact(idx) {
+      const reveal = document.getElementById('reveal-' + idx);
+      reveal.classList.toggle('hidden');
+    }
+ 
+    function sendMsg(btn) {
+      const textarea = btn.previousElementSibling;
+      if (textarea.value.trim()) {
+        btn.textContent = '✓ Message noted (demo mode)';
+        btn.disabled = true;
+        textarea.disabled = true;
+      }
+    }
+  </script>
+</body>
+</html>
+ 
