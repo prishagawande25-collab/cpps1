@@ -10,11 +10,19 @@
  
   <header>
     <div class="header-inner">
-      <div class="logo">
-        <span class="drop">&#9679;</span>
-        <span class="brand">BloodBridge</span>
+      <div class="brand-wrapper">
+        <div class="logo">
+          <span class="drop">●</span>
+          <span class="brand">BloodBridge</span>
+        </div>
+        <p class="tagline">Hospital Blood Exchange Network</p>
       </div>
-      <p class="tagline">Hospital Blood Exchange Network</p>
+      
+      <!-- LOG IN AND SIGN UP NAVIGATION LINKS -->
+      <nav class="auth-buttons">
+        <a href="/login" class="btn-secondary">Log In</a>
+        <a href="/signup" class="btn-primary-header">Sign Up</a>
+      </nav>
     </div>
   </header>
  
@@ -113,7 +121,7 @@
         {% if hospitals %}
           <div class="results-header">
             {% if same_city %}
-              <p class="result-note city-match">&#10003; Showing hospitals in <strong>{{ search_city }}</strong> with <strong>{{ search_bg }}</strong></p>
+              <p class="result-note city-match">✓ Showing hospitals in <strong>{{ search_city }}</strong> with <strong>{{ search_bg }}</strong></p>
             {% else %}
               <p class="result-note fallback">No hospitals found in {{ search_city }} — showing all matches for <strong>{{ search_bg }}</strong></p>
             {% endif %}
@@ -132,11 +140,11 @@
                 </span>
               </div>
               <h3 class="card-name">{{ h.name }}</h3>
-              <p class="card-address">&#128205; {{ h.address }}</p>
+              <p class="card-address">📍 {{ h.address }}</p>
               <div class="contact-section" id="contact-{{ loop.index }}">
                 <button class="btn-contact" onclick="toggleContact({{ loop.index }})">Contact Hospital</button>
                 <div class="contact-reveal hidden" id="reveal-{{ loop.index }}">
-                  <p class="contact-info">&#128222; {{ h.contact }}</p>
+                  <p class="contact-info">📞 {{ h.contact }}</p>
                   <div class="msg-form">
                     <textarea placeholder="Write a quick message..." rows="3"></textarea>
                     <button class="btn-send" onclick="sendMsg(this)">Send Message</button>
@@ -149,7 +157,7 @@
  
         {% else %}
           <div class="empty-state">
-            <div class="empty-icon">&#128197;</div>
+            <div class="empty-icon">📅</div>
             <p>No hospitals found with <strong>{{ search_bg }}</strong> blood anywhere.</p>
             <p class="empty-sub">Try registering your hospital or check a different blood group.</p>
           </div>
@@ -167,7 +175,9 @@
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById('tab-' + tab).classList.remove('hidden');
-      event.currentTarget.classList.add('active');
+      if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
     }
  
     function toggleContact(idx) {
@@ -186,4 +196,3 @@
   </script>
 </body>
 </html>
- 
